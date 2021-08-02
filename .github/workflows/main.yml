@@ -15,6 +15,7 @@ jobs:
         with:
           screeps-shard: '1'
           screeps-token: ${{ secrets.SCREEPS_TOKEN }}
+          bitio-password: ${{ secrets.BITIO_PASSWORD }}
       # Use the output from the `hello` step
       - name: Get the output time
         run: echo "The time was ${{ steps.screeps.outputs.time }}"
