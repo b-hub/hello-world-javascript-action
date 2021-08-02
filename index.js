@@ -10,6 +10,25 @@ try {
   // Get the JSON webhook payload for the event that triggered the workflow
   const payload = JSON.stringify(github.context.payload, undefined, 2)
   console.log(`The event payload: ${payload}`);
+
+  console.log("--- making custom request");
+  httpGetAsync("https://b-hub.github.io/", response => {
+    console.log("response", response);
+  });
+
 } catch (error) {
   core.setFailed(error.message);
+}
+
+function httpGetAsync(theUrl, callback)
+{
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function() { 
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+            callback(xmlHttp.responseText);
+        else
+            console.log("ERROR", xmlHttp.status);
+    }
+    xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+    xmlHttp.send(null);
 }
