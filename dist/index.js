@@ -6281,6 +6281,7 @@ var __webpack_exports__ = {};
 (() => {
 const core = __nccwpck_require__(0);
 const github = __nccwpck_require__(705);
+const https = __nccwpck_require__(211);
 
 try {
   // `who-to-greet` input defined in action metadata file
@@ -6293,7 +6294,7 @@ try {
   console.log(`The event payload: ${payload}`);
 
   console.log("--- making custom request");
-  httpGetAsync("https://b-hub.github.io/", response => {
+  httpGetAsync("b-hub.github.io", response => {
     console.log("response", response);
   });
 
@@ -6303,15 +6304,26 @@ try {
 
 function httpGetAsync(theUrl, callback)
 {
-    var xmlHttp = new XMLHttpRequest();
-    xmlHttp.onreadystatechange = function() { 
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
-            callback(xmlHttp.responseText);
-        else
-            console.log("ERROR", xmlHttp.status);
-    }
-    xmlHttp.open("GET", theUrl, true); // true for asynchronous 
-    xmlHttp.send(null);
+    const options = {
+        hostname: theUrl,
+        port: 443,
+        path: '/',
+        method: 'GET'
+      }
+      
+      const req = https.request(options, res => {
+        console.log(`statusCode: ${res.statusCode}`)
+      
+        res.on('data', d => {
+            callback(d);
+        })
+      })
+      
+      req.on('error', error => {
+        console.error(error)
+      })
+      
+      req.end()
 }
 })();
 
