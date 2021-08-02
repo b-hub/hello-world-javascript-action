@@ -1,6 +1,7 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 const https = require('https');
+const request = require('request');
 
 try {
   // `who-to-greet` input defined in action metadata file
@@ -13,9 +14,13 @@ try {
   console.log(`The event payload: ${payload}`);
 
   console.log("--- making custom request");
-  httpGetAsync("b-hub.github.io", response => {
-    console.log("response", response);
+  request({url:"https://b-hub.github.io/"}, function(err, response, body) {
+    if(err) { console.log(err); return; }
+    console.log("Get response", body);
   });
+//   httpGetAsync("b-hub.github.io", response => {
+//     console.log("response", response);
+//   });
 
 } catch (error) {
   core.setFailed(error.message);
@@ -28,19 +33,19 @@ function httpGetAsync(theUrl, callback)
         port: 443,
         path: '/',
         method: 'GET'
-      }
+      };
       
       const req = https.request(options, res => {
-        console.log(`statusCode: ${res.statusCode}`)
+        console.log(`statusCode: ${res.statusCode}`);
       
         res.on('data', d => {
             callback(d);
-        })
-      })
+        });
+      });
       
       req.on('error', error => {
-        console.error(error)
-      })
+        console.error(error);
+      });
       
-      req.end()
+      req.end();
 }
