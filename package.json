@@ -18,9 +18,10 @@
   },
   "homepage": "https://github.com/b-hub/hello-world-javascript-action#readme",
   "dependencies": {
-    "@actions/core": "^1.4.0",
-    "@actions/github": "^5.0.0",
-    "https": "1.0.0",
-    "request": "^2.88.2"
+    "@actions/core": "1.4.0",
+    "@actions/github": "5.0.0",
+    "pg": "^8.7.1",
+    "request": "2.88.2",
+    "zlib": "1.0.5"
   }
 }
