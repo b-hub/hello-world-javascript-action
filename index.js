@@ -3,7 +3,6 @@ const github = require('@actions/github');
 const request = require('request');
 const zlib = require('zlib');
 const { Pool, Client } = require('pg');
-const { getHeapCodeStatistics } = require('v8');
 
 try {
   // `who-to-greet` input defined in action metadata file
@@ -29,11 +28,7 @@ const text = 'INSERT INTO "b-hub/screeps"."test"("energyHarvested", "energyContr
 const values = [5, 99, "2021-06-01T20:19:00"];
 
 const client = new Client({
-    user: 'b-hub_demo_db_connection',
-    host: 'db.bit.io',
-    database: 'bitdotio',
-    password: 'xxx',
-    port: 5432
+    connectionString: core.getInput('bitio-connection-string'),
   });
 
   client.connect();
