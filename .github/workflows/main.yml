@@ -9,11 +9,12 @@ jobs:
       # you must check out the repository
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Hello world action step
+      - name: screeps action step
         uses: ./ # Uses an action in the root directory
-        id: hello
+        id: screeps
         with:
-          who-to-greet: 'Mona the Octocat'
+          screeps-shard: '1'
+          screeps-token: ${{ secrets.SCREEPS_TOKEN }}
       # Use the output from the `hello` step
       - name: Get the output time
-        run: echo "The time was ${{ steps.hello.outputs.time }}"
+        run: echo "The time was ${{ steps.screeps.outputs.time }}"
