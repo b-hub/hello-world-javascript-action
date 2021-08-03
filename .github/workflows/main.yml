@@ -1,4 +1,6 @@
-on: [push]
+on:
+  schedule:
+  - cron:  '*/5 * * * *'
 
 jobs:
   hello_world_job:
@@ -13,9 +15,7 @@ jobs:
         uses: ./ # Uses an action in the root directory
         id: screeps
         with:
-          screeps-shard: '1'
+          screeps-shard: 'shard1'
           screeps-token: ${{ secrets.SCREEPS_TOKEN }}
-          bitio-connection-string: ${{ secrets.BITIO_CONNECTION_STRING }}
-      # Use the output from the `hello` step
-      - name: Get the output time
-        run: echo "The time was ${{ steps.screeps.outputs.time }}"
+          pg-connection-string: ${{ secrets.PG_CONNECTION_STRING }}
+          pg-database: 'screeps'
