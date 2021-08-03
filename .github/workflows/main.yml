@@ -18,4 +18,4 @@ jobs:
           screeps-shard: 'shard1'
           screeps-token: ${{ secrets.SCREEPS_TOKEN }}
           pg-connection-string: ${{ secrets.PG_CONNECTION_STRING }}
-          pg-database: 'screeps'
+          pg-database: 'b-hub/screeps'
