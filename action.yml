@@ -1,13 +1,18 @@
-name: 'Hello World'
-description: 'Greet someone and record the time'
+name: 'screeps stats agent'
+description: 'Fetches stats data from your screep and pushes it to a database'
 inputs:
-  who-to-greet:  # id of input
-    description: 'Who to greet'
+  screeps-shard:
+    description: 'Name of shard e.g. shard0'
     required: true
-    default: 'World'
-outputs:
-  time: # id of output
-    description: 'The time we greeted you'
+    default: 'shard0'
+  screeps-token:
+    description: 'API token used to access screeps stats'
+    required: true
+  pg-connection-string:
+    description: 'Connection string of a PostgreSQL server'
+    required: true
+  pg-database:
+    description: 'Name of database on server'
 runs:
   using: 'node12'
   main: 'dist/index.js'

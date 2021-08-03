@@ -48058,85 +48058,108 @@ const core = __nccwpck_require__(6000);
 const github = __nccwpck_require__(705);
 const request = __nccwpck_require__(4341);
 const zlib = __nccwpck_require__(8761);
-const { Pool, Client } = __nccwpck_require__(188);
+const { Client } = __nccwpck_require__(188);
 
-try {
-  // `who-to-greet` input defined in action metadata file
-  const screepsShard = "shard0";//core.getInput('screeps-shard');
-  const screepsToken = "xxx";//core.getInput('screeps-token');
-  const time = (new Date()).toTimeString();
-  core.setOutput("time", time);
-  // Get the JSON webhook payload for the event that triggered the workflow
-  const payload = JSON.stringify(github.context.payload, undefined, 2)
-  console.log(`The event payload: ${payload}`);
+const input = {
+  screepsShard: core.getInput('screeps-shard') || process.env.SCREEPS_SHARD,
+  screepsToken: core.getInput('screeps-token') || process.env.SCREEPS_TOKEN,
+  pgConnectionString: core.getInput('pg-connection-string') || process.env.PG_CONNECTION_STRING,
+  pgDatabase: core.getInput('pg-database') || process.env.PG_DATABASE
+};
 
-  console.log("--- making custom request");
-  //getData();
-  postData();
+run().catch(err => core.setFailed(err));
 
-} catch (error) {
-  core.setFailed(error.message);
+async function run() {
+  let statsData = await getData();
+  console.log("statsData", statsData);
+  let data = mapToInsertData(statsData);
+  for (var i = 0; i < data.length; i++) {
+    await insertTableData(data[i]);
+  }
 }
 
-function postData() {
-    
-const text = 'INSERT INTO "b-hub/screeps"."test"("energyHarvested", "energyControl", "requestDate") VALUES($1, $2, $3) RETURNING *';
-const values = [5, 99, "2021-06-01T20:19:00"];
+function mapToInsertData(statsData) {
+  let insertData = [];
 
-const client = new Client({
-    connectionString: core.getInput('bitio-connection-string'),
+  for (let tableName in statsData.table) {
+    var tableMapping = statsData.table[tableName];
+    var columnNames = Object.keys(tableMapping);
+    var values = columnNames.map(key => tableMapping[key].split('.').reduce((obj, value) => obj[value], statsData));
+    insertData.push({
+      tableName: tableName,
+      columnNames: columnNames,
+      values: [values]
+    });
+  }
+
+  return insertData;
+}
+
+async function insertTableData(data) {
+  var rows = data.values.length;
+  if (rows === 0) {
+    console.log("No data to insert. Skipping connecting to database");
+    return;
+  }
+
+  var valueLength = data.values[0].length;
+  var valuesQuery = [];
+  var currentValueIndex = 1;
+  for (var i = 0; i < rows; i++) {
+    var valueIndexes =[];
+    for (var j = 0; j < valueLength; j++) {
+      valueIndexes.push(`$${currentValueIndex++}`);
+    }
+    console.log(valueIndexes);
+    valuesQuery.push(`(${valueIndexes.join(',')})`);
+  }
+
+  const text = `INSERT INTO "${input.pgDatabase}"."${data.tableName}"(${data.columnNames.join(',')}) VALUES${valuesQuery.join(',')} RETURNING *`;
+  const values = data.values.reduce((result, value) => result.concat(value), []);
+
+  const client = new Client({
+    connectionString: input.pgConnectionString,
   });
 
   client.connect();
-  client.query(text, values, (err, res) => {
-    if (err) {
-      console.log(err.stack)
-    } else {
-      console.log(res.rows[0])
-      // { name: 'brianc', email: 'brian.m.carlson@gmail.com' }
-    }
 
-    client.end();
-  });
+  return new Promise((resolve, reject) => {
+    client.query(text, values, (err, res) => {
+      if (err) {
+        reject(err.stack);
+      } else {
+        console.log(res.rows.length, "rows inserted");
+        resolve();
+      }
+    });
+  }).finally(() => client.end());
 }
 
-// function postData(data) {
-//     request({
-//         url: "",
-//         method: "POST",
-//         headers: {
-//             'Authorization': 'Bearer' + token,
-//             'Content-Disposition': "attachment;filename='name'"
-//         },
-//         data
-//     });
-// }
-
-function getData() {
+async function getData() {
+  return new Promise((resolve, reject) => {
     request({
-        url:"https://screeps.com/api/user/memory",
-        method: "GET",
-        json: true,
-        qs: {
-            path: "stats",
-            shard: screepsShard,
-            _token: screepsToken
-        },
-      }
-      ,
-        function(err, response, body) {
-          if(err) { console.log(err); return; }
-          try {
-              var data = body.data.split('gz:')[1];
-              var buffer = Buffer.from(data, 'base64');
-              var finalData = JSON.parse(zlib.gunzipSync(buffer));
-              console.log("Get response", finalData);
-          }
-          catch (err) {
-              console.error(err);
-          }
+      url:"https://screeps.com/api/user/memory",
+      method: "GET",
+      json: true,
+      qs: {
+          path: "stats",
+          shard: input.screepsShard,
+          _token: input.screepsToken
+      },
+    }, function(err, response, body) {
+        if(err) { reject(err); }
+        try {
+            var data = body.data.split('gz:')[1];
+            var buffer = Buffer.from(data, 'base64');
+            var statsData = JSON.parse(zlib.gunzipSync(buffer));
+            resolve(statsData);
         }
-      );
+        catch (err) {
+            reject(err);
+        }
+      }
+    );
+  });
 }
 })();
 
